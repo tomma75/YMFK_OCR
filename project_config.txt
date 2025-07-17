@@ -1,0 +1,37 @@
+yokogawa_ocr_data_preparation/
+├── main.py                           # 메인 실행 파일
+├── config/
+│   ├── __init__.py
+│   ├── settings.py                   # 설정 관리
+│   └── constants.py                  # 상수 정의
+├── core/
+│   ├── __init__.py
+│   ├── base_classes.py               # 추상 클래스 및 인터페이스
+│   └── exceptions.py                 # 커스텀 예외 클래스
+├── services/
+│   ├── __init__.py
+│   ├── data_collection_service.py    # 데이터 수집 서비스
+│   ├── labeling_service.py          # 라벨링 서비스
+│   ├── augmentation_service.py      # 데이터 증강 서비스
+│   └── validation_service.py        # 데이터 검증 서비스
+├── models/
+│   ├── __init__.py
+│   ├── document_model.py            # 문서 데이터 모델
+│   └── annotation_model.py          # 어노테이션 데이터 모델
+├── utils/
+│   ├── __init__.py
+│   ├── logger_util.py              # 로깅 유틸리티
+│   ├── file_handler.py             # 파일 처리 유틸리티
+│   └── image_processor.py          # 이미지 처리 유틸리티
+├── data/
+│   ├── raw/                        # 원본 PDF/이미지 파일
+│   ├── processed/                  # 전처리된 데이터
+│   ├── annotations/                # 라벨링 결과 (JSON 형태)
+│   └── augmented/                  # 증강된 데이터
+├── templates/
+│   ├── annotation_template.json    # 라벨링 템플릿
+│   └── validation_schema.json      # 검증 스키마
+├── tests/
+│   ├── __init__.py
+│   └── test_data_preparation.py    # 테스트 코드
+└── requirements.txt                # 의존성 목록

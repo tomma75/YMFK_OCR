@@ -1,0 +1,200 @@
+<main.py>
+def setup_logging() -> None
+def initialize_application() -> bool  
+def run_data_collection_pipeline() -> bool
+def run_labeling_pipeline() -> bool
+def run_augmentation_pipeline() -> bool
+def run_validation_pipeline() -> bool
+def main() -> Optional[int]
+
+<config/settings.py>
+# 클래스들
+class ApplicationConfig
+class DatabaseConfig
+class LoggingConfig
+class ProcessingConfig
+
+# 함수들
+def load_configuration() -> ApplicationConfig
+def get_database_config() -> DatabaseConfig
+def get_logging_config() -> LoggingConfig
+def validate_configuration(config: ApplicationConfig) -> bool
+
+<config/constants.py>
+# 상수들 (함수 없음, 상수 정의만)
+SUPPORTED_FILE_FORMATS: List[str]
+DEFAULT_IMAGE_RESOLUTION: int
+MAX_FILE_SIZE_MB: int
+ANNOTATION_FIELD_TYPES: Dict[str, str]
+DATA_SPLIT_RATIOS: Dict[str, float]
+
+<core/base_classes.py>
+# 추상 클래스들
+class BaseService(ABC)
+class BaseModel(ABC)
+class BaseProcessor(ABC)
+class BaseValidator(ABC)
+
+# 인터페이스들
+class DataCollectionInterface(ABC)
+class LabelingInterface(ABC)
+class AugmentationInterface(ABC)
+class ValidationInterface(ABC)
+
+<core/exceptions.py>
+# 커스텀 예외 클래스들
+class ApplicationError(Exception)
+class DataCollectionError(ApplicationError)
+class LabelingError(ApplicationError)
+class AugmentationError(ApplicationError)
+class ValidationError(ApplicationError)
+class FileProcessingError(ApplicationError)
+class ConfigurationError(ApplicationError)
+
+<services/data_collection_service.py>
+# 클래스들
+class DataCollectionService(BaseService)
+class FileCollector
+class MetadataExtractor
+class DuplicateDetector
+
+# 함수들
+def collect_pdf_files(source_path: str) -> List[str]
+def extract_file_metadata(file_path: str) -> Dict[str, Any]
+def detect_duplicates(file_list: List[str]) -> List[str]
+def validate_file_integrity(file_path: str) -> bool
+def categorize_files_by_type(file_list: List[str]) -> Dict[str, List[str]]
+
+<services/labeling_service.py>
+# 클래스들
+class LabelingService(BaseService)
+class AnnotationManager
+class QualityController
+class LabelingSessionManager
+
+# 함수들
+def create_annotation_session(document_path: str) -> str
+def save_annotation_data(session_id: str, annotation_data: Dict) -> bool
+def load_annotation_template() -> Dict[str, Any]
+def validate_annotation_completeness(annotation_data: Dict) -> bool
+def export_annotations_to_json(annotations: List[Dict]) -> str
+def import_annotations_from_json(json_path: str) -> List[Dict]
+
+<services/augmentation_service.py>
+# 클래스들
+class AugmentationService(BaseService)
+class ImageAugmenter
+class GeometricTransformer
+class ColorAdjuster
+class NoiseGenerator
+
+# 함수들
+def apply_geometric_transformations(image: np.ndarray) -> List[np.ndarray]
+def apply_color_adjustments(image: np.ndarray) -> List[np.ndarray]
+def add_noise_variations(image: np.ndarray) -> List[np.ndarray]
+def generate_augmented_dataset(original_data: List[Dict]) -> List[Dict]
+def save_augmented_data(augmented_data: List[Dict], output_path: str) -> bool
+
+<services/validation_service.py>
+# 클래스들
+class ValidationService(BaseService)
+class DataQualityValidator
+class AnnotationValidator
+class ConsistencyChecker
+class StatisticsGenerator
+
+# 함수들
+def validate_dataset_completeness(dataset: List[Dict]) -> bool
+def check_annotation_consistency(annotations: List[Dict]) -> List[str]
+def generate_quality_report(dataset: List[Dict]) -> Dict[str, Any]
+def validate_data_split_ratios(dataset: List[Dict]) -> bool
+def perform_cross_validation(annotations: List[Dict]) -> Dict[str, float]
+
+<models/document_model.py>
+# 클래스들
+class DocumentModel(BaseModel)
+class DocumentMetadata
+class PageInfo
+class DocumentStatistics
+
+# 함수들 (클래스 메서드들)
+def from_file_path(cls, file_path: str) -> 'DocumentModel'
+def to_dict(self) -> Dict[str, Any]
+def from_dict(cls, data: Dict[str, Any]) -> 'DocumentModel'
+def validate_document_format(self) -> bool
+def extract_text_content(self) -> str
+def get_page_count(self) -> int
+
+<models/annotation_model.py>
+# 클래스들
+class AnnotationModel(BaseModel)
+class BoundingBox
+class FieldAnnotation
+class DocumentAnnotation
+class AnnotationCollection
+
+# 함수들 (클래스 메서드들)
+def create_bounding_box(x: int, y: int, width: int, height: int) -> BoundingBox
+def add_field_annotation(self, field_name: str, bbox: BoundingBox, text_value: str) -> None
+def validate_annotation_structure(self) -> bool
+def calculate_annotation_coverage(self) -> float
+def merge_annotations(self, other: 'AnnotationModel') -> 'AnnotationModel'
+
+<utils/logger_util.py>
+# 클래스들
+class CustomLogger
+class LogFormatter
+class FileHandler
+
+# 함수들
+def setup_logger(name: str, log_level: str = "INFO") -> logging.Logger
+def create_file_handler(log_file_path: str) -> logging.FileHandler
+def create_console_handler() -> logging.StreamHandler
+def format_log_message(message: str, level: str, timestamp: str) -> str
+
+<utils/file_handler.py>
+# 클래스들
+class FileHandler
+class PDFProcessor
+class ImageProcessor
+class JSONProcessor
+
+# 함수들
+def create_directory_if_not_exists(directory_path: str) -> bool
+def copy_file_with_backup(source: str, destination: str) -> bool
+def get_file_size_mb(file_path: str) -> float
+def calculate_file_hash(file_path: str) -> str
+def compress_file(file_path: str, compression_level: int = 6) -> str
+def extract_compressed_file(compressed_path: str, extract_to: str) -> bool
+
+<utils/image_processor.py>
+# 클래스들
+class ImageProcessor
+class ImageConverter
+class ImageEnhancer
+class ImageValidator
+
+# 함수들
+def convert_pdf_to_images(pdf_path: str, output_dir: str) -> List[str]
+def resize_image(image_path: str, target_size: Tuple[int, int]) -> np.ndarray
+def enhance_image_quality(image: np.ndarray) -> np.ndarray
+def detect_image_orientation(image: np.ndarray) -> float
+def correct_image_skew(image: np.ndarray) -> np.ndarray
+def validate_image_format(image_path: str) -> bool
+
+<tests/test_data_preparation.py>
+# 클래스들
+class TestDataCollection(unittest.TestCase)
+class TestLabelingService(unittest.TestCase)
+class TestAugmentationService(unittest.TestCase)
+class TestValidationService(unittest.TestCase)
+class TestImageProcessor(unittest.TestCase)
+
+# 함수들
+def setUp(self) -> None
+def tearDown(self) -> None
+def test_file_collection_process() -> None
+def test_annotation_creation() -> None
+def test_data_augmentation() -> None
+def test_validation_pipeline() -> None
+def test_image_processing() -> None
