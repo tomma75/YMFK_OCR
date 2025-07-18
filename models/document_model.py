@@ -335,6 +335,18 @@ class PageInfo:
             return 0.0
         return self.page_width / self.page_height
 
+    def set_document_id(self, document_id: str) -> None:
+        self.document_id = document_id
+
+    def set_file_path(self, file_path: str) -> None:
+        self.file_path = file_path
+
+    def set_file_name(self, file_name: str) -> None:
+        self.file_name = file_name
+
+    def set_file_size(self, file_size: int) -> None:
+        self.file_size = file_size
+
 
 # ====================================================================================
 # 3. 문서 통계 클래스

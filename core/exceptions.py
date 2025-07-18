@@ -618,6 +618,7 @@ class ImageProcessingError(AugmentationError):
         image_path: Optional[str] = None,
         image_dimensions: Optional[tuple] = None,
         processing_operation: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         context = kwargs.get("context", {})
