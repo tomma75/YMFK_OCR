@@ -1,0 +1,527 @@
+YOKOGAWA OCR 데이터 준비 프로젝트 - 의존성 관리 규칙
+
+====================================================================================
+1. 의존성 주입 패턴
+====================================================================================
+
+### 1.1 의존성 주입 기본 원칙
+- 모든 서비스는 생성자를 통해 의존성을 주입받음
+- 구체적인 구현체가 아닌 추상화(인터페이스)에 의존
+- 의존성 역전 원칙(DIP) 준수
+- 단일 책임 원칙(SRP)을 통한 의존성 최소화
+
+### 1.2 의존성 주입 구현 패턴
+의존성 주입 컨테이너
+class DependencyContainer:
+"""의존성 주입 컨테이너 클래스"""
+
+ 
+def __init__(self):
+    self._services: Dict[str, Any] = {}
+    self._singletons: Dict[str, Any] = {}
+    self._factories: Dict[str, Callable] = {}
+
+def register_singleton(self, service_name: str, instance: Any) -> None:
+    """싱글톤 서비스 등록"""
+    self._singletons[service_name] = instance
+
+def register_factory(self, service_name: str, factory: Callable) -> None:
+    """팩토리 함수 등록"""
+    self._factories[service_name] = factory
+
+def get_service(self, service_name: str) -> Any:
+    """서비스 인스턴스 조회"""
+    if service_name in self._singletons:
+        return self._singletons[service_name]
+    elif service_name in self._factories:
+        return self._factories[service_name]()
+    else:
+        raise ValueError(f"Service not found: {service_name}")
+의존성 주입을 사용하는 서비스 예시
+class DataCollectionService(BaseService):
+def init(
+self,
+config: ApplicationConfig,
+logger: logging.Logger,
+file_handler: FileHandler,
+metadata_extractor: MetadataExtractor,
+validator: FileValidator
+):
+super().init(config, logger)
+self._file_handler = file_handler
+self._metadata_extractor = metadata_extractor
+self._validator = validator
+
+ 
+@classmethod
+def create_with_dependencies(cls, container: DependencyContainer) -> 'DataCollectionService':
+    """의존성 컨테이너를 사용한 팩토리 메서드"""
+    return cls(
+        config=container.get_service('config'),
+        logger=container.get_service('logger'),
+        file_handler=container.get_service('file_handler'),
+        metadata_extractor=container.get_service('metadata_extractor'),
+        validator=container.get_service('file_validator')
+    )
+ 
+
+====================================================================================
+2. 모듈 간 의존성 계층 구조
+====================================================================================
+
+### 2.1 의존성 계층 다이어그램
+┌─────────────────────────────────────────────────────┐
+│ main.py │
+│ (Entry Point) │
+└─────────────────────┬───────────────────────────────┘
+│
+┌─────────────────────▼───────────────────────────────┐
+│ services/ │
+│ (Business Logic Layer) │
+│ - DataCollectionService │
+│ - LabelingService │
+│ - AugmentationService │
+│ - ValidationService │
+└─────────────────────┬───────────────────────────────┘
+│
+┌─────────────────────▼───────────────────────────────┐
+│ models/ │
+│ (Data Layer) │
+│ - DocumentModel │
+│ - AnnotationModel │
+│ - ValidationModel │
+└─────────────────────┬───────────────────────────────┘
+│
+┌─────────────────────▼───────────────────────────────┐
+│ core/ │
+│ (Foundation Layer) │
+│ - BaseService │
+│ - BaseModel │
+│ - Exceptions │
+└─────────────────────┬───────────────────────────────┘
+│
+┌─────────────────────▼───────────────────────────────┐
+│ utils/ │
+│ (Utility Layer) │
+│ - FileHandler │
+│ - ImageProcessor │
+│ - LoggerUtil │
+└─────────────────────┬───────────────────────────────┘
+│
+┌─────────────────────▼───────────────────────────────┐
+│ config/ │
+│ (Configuration Layer) │
+│ - ApplicationConfig │
+│ - Constants │
+│ - Settings │
+└─────────────────────────────────────────────────────┘
+
+ 
+
+### 2.2 의존성 방향 규칙
+올바른 의존성 방향 (위에서 아래로)
+class DataCollectionService(BaseService): # services → core
+def init(
+self,
+config: ApplicationConfig, # services → config
+logger: logging.Logger, # services → utils
+file_handler: FileHandler # services → utils
+):
+pass
+
+잘못된 의존성 방향 (아래에서 위로) - 금지
+class BaseService: # core
+def init(self, collection_service: DataCollectionService): # core → services (금지)
+pass
+
+동일 계층 내 의존성 - 인터페이스를 통해서만 허용
+class LabelingService(BaseService):
+def init(
+self,
+config: ApplicationConfig,
+logger: logging.Logger,
+data_collection_interface: DataCollectionInterface # 인터페이스를 통한 의존성
+):
+pass
+
+ 
+
+====================================================================================
+3. 순환 의존성 방지 규칙
+====================================================================================
+
+### 3.1 순환 의존성 탐지 및 방지
+순환 의존성 탐지기
+class CircularDependencyDetector:
+"""순환 의존성 탐지 클래스"""
+
+ 
+def __init__(self):
+    self._dependency_graph: Dict[str, List[str]] = {}
+    self._visited: Set[str] = set()
+    self._rec_stack: Set[str] = set()
+
+def add_dependency(self, service: str, depends_on: str) -> None:
+    """의존성 관계 추가"""
+    if service not in self._dependency_graph:
+        self._dependency_graph[service] = []
+    self._dependency_graph[service].append(depends_on)
+
+def has_circular_dependency(self) -> bool:
+    """순환 의존성 존재 여부 확인"""
+    for service in self._dependency_graph:
+        if service not in self._visited:
+            if self._has_cycle_util(service):
+                return True
+    return False
+
+def _has_cycle_util(self, service: str) -> bool:
+    """순환 의존성 확인 유틸리티"""
+    self._visited.add(service)
+    self._rec_stack.add(service)
+    
+    for dependency in self._dependency_graph.get(service, []):
+        if dependency not in self._visited:
+            if self._has_cycle_util(dependency):
+                return True
+        elif dependency in self._rec_stack:
+            return True
+    
+    self._rec_stack.remove(service)
+    return False
+ 
+
+### 3.2 순환 의존성 해결 패턴
+문제: 순환 의존성
+class ServiceA:
+def init(self, service_b: 'ServiceB'): # A → B
+self.service_b = service_b
+
+class ServiceB:
+def init(self, service_a: 'ServiceA'): # B → A (순환 의존성)
+self.service_a = service_a
+
+해결 방법 1: 중재자 패턴
+class ServiceMediator:
+"""서비스 간 중재자"""
+
+ 
+def __init__(self):
+    self._services: Dict[str, Any] = {}
+
+def register_service(self, name: str, service: Any) -> None:
+    self._services[name] = service
+
+def get_service(self, name: str) -> Any:
+    return self._services.get(name)
+
+def coordinate_services(self, service_a_name: str, service_b_name: str) -> None:
+    service_a = self._services[service_a_name]
+    service_b = self._services[service_b_name]
+    # 서비스 간 상호작용 조정
+class ServiceA:
+def init(self, mediator: ServiceMediator):
+self.mediator = mediator
+
+class ServiceB:
+def init(self, mediator: ServiceMediator):
+self.mediator = mediator
+
+해결 방법 2: 이벤트 기반 아키텍처
+class EventBus:
+"""이벤트 버스 클래스"""
+
+ 
+def __init__(self):
+    self._listeners: Dict[str, List[Callable]] = {}
+
+def subscribe(self, event_type: str, listener: Callable) -> None:
+    if event_type not in self._listeners:
+        self._listeners[event_type] = []
+    self._listeners[event_type].append(listener)
+
+def publish(self, event_type: str, data: Any) -> None:
+    for listener in self._listeners.get(event_type, []):
+        listener(data)
+class ServiceA:
+def init(self, event_bus: EventBus):
+self.event_bus = event_bus
+self.event_bus.subscribe('service_b_ready', self._on_service_b_ready)
+
+ 
+def _on_service_b_ready(self, data: Any) -> None:
+    # ServiceB가 준비되었을 때 처리
+class ServiceB:
+def init(self, event_bus: EventBus):
+self.event_bus = event_bus
+self.event_bus.subscribe('service_a_ready', self._on_service_a_ready)
+
+ 
+def _on_service_a_ready(self, data: Any) -> None:
+    # ServiceA가 준비되었을 때 처리
+ 
+
+====================================================================================
+4. 외부 라이브러리 의존성 관리
+====================================================================================
+
+### 4.1 외부 라이브러리 추상화 패턴
+외부 라이브러리 추상화 인터페이스
+class PDFProcessorInterface(ABC):
+"""PDF 처리 인터페이스"""
+
+ 
+@abstractmethod
+def open_pdf(self, file_path: str) -> Any:
+    pass
+
+@abstractmethod
+def extract_ (self, pdf_document: Any, page_number: int) -> str:
+    pass
+
+@abstractmethod
+def extract_images(self, pdf_document: Any, page_number: int) -> List[Any]:
+    pass
+
+@abstractmethod
+def close_pdf(self, pdf_document: Any) -> None:
+    pass
+PyMuPDF 구현체
+class PyMuPDFProcessor(PDFProcessorInterface):
+"""PyMuPDF를 사용한 PDF 처리 구현체"""
+
+ 
+def open_pdf(self, file_path: str) -> fitz.Document:
+    return fitz.open(file_path)
+
+def extract_ (self, pdf_document: fitz.Document, page_number: int) -> str:
+    page = pdf_document[page_number]
+    return page.get_ ()
+
+def extract_images(self, pdf_document: fitz.Document, page_number: int) -> List[Any]:
+    page = pdf_document[page_number]
+    return page.get_images()
+
+def close_pdf(self, pdf_document: fitz.Document) -> None:
+    pdf_document.close()
+대체 구현체 (예: PyPDF2)
+class PyPDF2Processor(PDFProcessorInterface):
+"""PyPDF2를 사용한 PDF 처리 구현체"""
+
+ 
+def open_pdf(self, file_path: str) -> PdfReader:
+    return PdfReader(file_path)
+
+def extract_ (self, pdf_document: PdfReader, page_number: int) -> str:
+    page = pdf_document.pages[page_number]
+    return page.extract_ ()
+
+def extract_images(self, pdf_document: PdfReader, page_number: int) -> List[Any]:
+    # PyPDF2의 이미지 추출 로직
+    pass
+
+def close_pdf(self, pdf_document: PdfReader) -> None:
+    # PyPDF2는 명시적 close가 필요 없음
+    pass
+ 
+
+### 4.2 의존성 버전 관리
+requirements.txt 표준 형식
+"""
+
+핵심 의존성 (고정 버전)
+fitz==1.23.8
+numpy==1.24.3
+opencv-python==4.8.0.74
+
+개발 의존성 (호환 버전)
+pytest>=7.0.0,<8.0.0
+black>=22.0.0
+flake8>=4.0.0
+
+선택적 의존성
+tensorflow>=2.10.0,<2.13.0; extra == "ml"
+torch>=1.12.0,<1.14.0; extra == "ml"
+"""
+
+의존성 호환성 검사기
+class DependencyCompatibilityChecker:
+"""의존성 호환성 검사 클래스"""
+
+ 
+def __init__(self):
+    self.required_versions = {
+        'python': '>=3.8,<3.12',
+        'numpy': '>=1.20.0,<1.25.0',
+        'opencv-python': '>=4.5.0,<4.9.0',
+        'fitz': '>=1.20.0,<1.24.0'
+    }
+
+def check_compatibility(self) -> Dict[str, bool]:
+    """의존성 호환성 검사"""
+    results = {}
+    
+    for package, version_spec in self.required_versions.items():
+        try:
+            installed_version = self._get_installed_version(package)
+            is_compatible = self._check_version_compatibility(installed_version, version_spec)
+            results[package] = is_compatible
+        except ImportError:
+            results[package] = False
+    
+    return results
+
+def _get_installed_version(self, package: str) -> str:
+    """설치된 패키지 버전 조회"""
+    if package == 'python':
+        return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    else:
+        return importlib.metadata.version(package)
+
+def _check_version_compatibility(self, installed: str, required: str) -> bool:
+    """버전 호환성 검사"""
+    # 버전 호환성 로직 구현
+    pass
+ 
+
+====================================================================================
+5. 의존성 생명주기 관리
+====================================================================================
+
+### 5.1 서비스 생명주기 관리
+class ServiceLifecycleManager:
+"""서비스 생명주기 관리자"""
+
+ 
+def __init__(self):
+    self._services: Dict[str, Any] = {}
+    self._startup_order: List[str] = []
+    self._shutdown_order: List[str] = []
+    self._service_states: Dict[str, str] = {}
+
+def register_service(
+    self,
+    service_name: str,
+    service_instance: Any,
+    startup_priority: int = 0,
+    shutdown_priority: int = 0
+) -> None:
+    """서비스 등록"""
+    self._services[service_name] = service_instance
+    self._service_states[service_name] = 'registered'
+    
+    # 시작 순서 정렬
+    self._startup_order.append((startup_priority, service_name))
+    self._startup_order.sort()
+    
+    # 종료 순서 정렬 (역순)
+    self._shutdown_order.append((shutdown_priority, service_name))
+    self._shutdown_order.sort(reverse=True)
+
+def startup_all_services(self) -> bool:
+    """모든 서비스 시작"""
+    for priority, service_name in self._startup_order:
+        service = self._services[service_name]
+        try:
+            if hasattr(service, 'initialize'):
+                service.initialize()
+            self._service_states[service_name] = 'running'
+            logging.info(f"Service {service_name} started successfully")
+        except Exception as e:
+            logging.error(f"Failed to start service {service_name}: {e}")
+            self._service_states[service_name] = 'failed'
+            return False
+    return True
+
+def shutdown_all_services(self) -> None:
+    """모든 서비스 종료"""
+    for priority, service_name in self._shutdown_order:
+        service = self._services[service_name]
+        try:
+            if hasattr(service, 'cleanup'):
+                service.cleanup()
+            self._service_states[service_name] = 'stopped'
+            logging.info(f"Service {service_name} stopped successfully")
+        except Exception as e:
+            logging.error(f"Failed to stop service {service_name}: {e}")
+            self._service_states[service_name] = 'error'
+
+def get_service_status(self) -> Dict[str, str]:
+    """서비스 상태 조회"""
+    return self._service_states.copy()
+ 
+
+### 5.2 의존성 주입 컨테이너 구현
+class ApplicationContainer:
+"""애플리케이션 의존성 컨테이너"""
+
+ 
+def __init__(self):
+    self._container = DependencyContainer()
+    self._lifecycle_manager = ServiceLifecycleManager()
+    self._is_initialized = False
+
+def initialize(self) -> None:
+    """컨테이너 초기화"""
+    if self._is_initialized:
+        return
+    
+    # 설정 서비스 등록
+    config = ApplicationConfig()
+    self._container.register_singleton('config', config)
+    
+    # 로깅 서비스 등록
+    logger = self._create_logger(config)
+    self._container.register_singleton('logger', logger)
+    
+    # 유틸리티 서비스 등록
+    self._register_utility_services()
+    
+    # 비즈니스 서비스 등록
+    self._register_business_services()
+    
+    # 서비스 생명주기 관리자 초기화
+    self._lifecycle_manager.startup_all_services()
+    
+    self._is_initialized = True
+
+def _register_utility_services(self) -> None:
+    """유틸리티 서비스 등록"""
+    file_handler = FileHandler()
+    image_processor = ImageProcessor()
+    
+    self._container.register_singleton('file_handler', file_handler)
+    self._container.register_singleton('image_processor', image_processor)
+
+def _register_business_services(self) -> None:
+    """비즈니스 서비스 등록"""
+    # 데이터 수집 서비스
+    data_collection_service = DataCollectionService.create_with_dependencies(self._container)
+    self._container.register_singleton('data_collection_service', data_collection_service)
+    self._lifecycle_manager.register_service('data_collection_service', data_collection_service, 1)
+    
+    # 라벨링 서비스
+    labeling_service = LabelingService.create_with_dependencies(self._container)
+    self._container.register_singleton('labeling_service', labeling_service)
+    self._lifecycle_manager.register_service('labeling_service', labeling_service, 2)
+    
+    # 데이터 증강 서비스
+    augmentation_service = AugmentationService.create_with_dependencies(self._container)
+    self._container.register_singleton('augmentation_service', augmentation_service)
+    self._lifecycle_manager.register_service('augmentation_service', augmentation_service, 3)
+    
+    # 검증 서비스
+    validation_service = ValidationService.create_with_dependencies(self._container)
+    self._container.register_singleton('validation_service', validation_service)
+    self._lifecycle_manager.register_service('validation_service', validation_service, 4)
+
+def get_service(self, service_name: str) -> Any:
+    """서비스 조회"""
+    return self._container.get_service(service_name)
+
+def shutdown(self) -> None:
+    """컨테이너 종료"""
+    self._lifecycle_manager.shutdown_all_services()
+    self._is_initialized = False
+ 
+undefined

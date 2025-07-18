@@ -1,0 +1,27 @@
+{
+    "schema_name": "default_validation_schema",
+    "schema_version": "1.0",
+    "description": "기본 검증 스키마",
+    "validation_criteria": {
+        "completeness_threshold": 0.9,
+        "accuracy_threshold": 0.8,
+        "consistency_threshold": 0.85
+    },
+    "field_validations": {
+        "document_title": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[a-zA-Z0-9가-힣\\s\\-_]+$"
+        },
+        "document_date": {
+            "type": "date",
+            "required": true,
+            "format": "YYYY-MM-DD"
+        },
+        "total_amount": {
+            "type": "number",
+            "required": true,
+            "minimum": 0
+        }
+    }
+}

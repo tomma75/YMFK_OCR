@@ -1,0 +1,149 @@
+YOKOGAWA OCR 데이터 준비 프로젝트 - 클래스 인터페이스 명세서
+
+====================================================================================
+1. 핵심 추상 클래스 인터페이스
+====================================================================================
+
+### 1.1 BaseService 추상 클래스
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+from config.settings import ApplicationConfig
+class BaseService(ABC):
+def __init__(self, config: ApplicationConfig, logger: logging.Logger):
+    self.config = config
+    self.logger = logger
+    self._is_initialized = False
+
+@abstractmethod
+def initialize(self) -> bool:
+    """서비스 초기화 - 모든 서비스에서 구현 필수"""
+    pass
+
+@abstractmethod
+def cleanup(self) -> None:
+    """서비스 정리 - 모든 서비스에서 구현 필수"""
+    pass
+
+@abstractmethod
+def health_check(self) -> bool:
+    """서비스 상태 확인 - 모든 서비스에서 구현 필수"""
+    pass
+
+def is_initialized(self) -> bool:
+    """초기화 상태 확인"""
+    return self._is_initialized
+
+### 1.2 BaseModel 추상 클래스
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+class BaseModel(ABC):
+def __init__(self):
+    self._created_at = datetime.now()
+    self._updated_at = datetime.now()
+
+@abstractmethod
+def to_dict(self) -> Dict[str, Any]:
+    """모델을 딕셔너리로 변환 - 모든 모델에서 구현 필수"""
+    pass
+
+@classmethod
+@abstractmethod
+def from_dict(cls, data: Dict[str, Any]) -> 'BaseModel':
+    """딕셔너리에서 모델 인스턴스 생성 - 모든 모델에서 구현 필수"""
+    pass
+
+@abstractmethod
+def validate(self) -> bool:
+    """모델 데이터 유효성 검증 - 모든 모델에서 구현 필수"""
+    pass
+
+def to_json(self) -> str:
+    """모델을 JSON 문자열로 변환"""
+    return json.dumps(self.to_dict(), default=str)
+
+@classmethod
+def from_json(cls, json_str: str) -> 'BaseModel':
+    """JSON 문자열에서 모델 인스턴스 생성"""
+    data = json.loads(json_str)
+    return cls.from_dict(data)
+
+====================================================================================
+2. 서비스 간 인터페이스 연결 규칙
+====================================================================================
+
+### 2.1 DataCollectionService 인터페이스
+class DataCollectionService(BaseService):
+def collect_files(self, source_path: str) -> List[str]:
+    """파일 수집 - 다른 서비스에서 호출 가능"""
+    pass
+
+def get_collection_statistics(self) -> Dict[str, Any]:
+    """수집 통계 정보 제공 - ValidationService에서 사용"""
+    pass
+
+def register_collection_callback(self, callback: Callable) -> None:
+    """수집 완료 시 콜백 등록 - LabelingService에서 사용"""
+    pass
+
+### 2.2 LabelingService 인터페이스
+class LabelingService(BaseService):
+""
+def create_labeling_session(self, file_path: str) -> str:
+    """라벨링 세션 생성 - 외부에서 호출 가능"""
+    pass
+
+def get_labeling_progress(self) -> Dict[str, float]:
+    """라벨링 진행 상황 제공 - ValidationService에서 사용"""
+    pass
+
+def export_annotations(self, format_type: str) -> str:
+    """어노테이션 내보내기 - AugmentationService에서 사용"""
+    pass
+
+
+### 2.3 AugmentationService 인터페이스
+class AugmentationService(BaseService):
+def augment_dataset(self, dataset: List[Dict]) -> List[Dict]:
+    """데이터셋 증강 - 외부에서 호출 가능"""
+    pass
+
+def get_augmentation_statistics(self) -> Dict[str, Any]:
+    """증강 통계 정보 제공 - ValidationService에서 사용"""
+    pass
+
+def configure_augmentation_rules(self, rules: Dict[str, Any]) -> None:
+    """증강 규칙 설정 - 외부에서 설정 가능"""
+    pass
+
+====================================================================================
+3. 모델 간 연결성 규칙
+====================================================================================
+
+### 3.1 DocumentModel과 AnnotationModel 연결
+class DocumentModel(BaseModel):
+def __init__(se metadata: Dict[str, Any]):
+super().__init__() self.fil
+h self.met
+def add_annotation(self, annotation: 'AnnotationModel') -> None:
+    """어노테이션 추가 - AnnotationModel과 연결"""
+    annotation.set_document(self)
+    self.annotations.append(annotation)
+
+def get_annotations_by_type(self, annotation_type: str) -> List['AnnotationModel']:
+    """타입별 어노테이션 조회"""
+    return [ann for ann in self.annotations if ann.type == annotation_type]
+class AnnotationModel(BaseModel):
+def __init__(self, field_namebbox: BoundingBox, text_value: str):
+init()
+self.field_name = fi
+ld_name
+elf.bbox = bbox self
+def set_document(self, document: DocumentModel) -> None:
+    """문서 모델 연결"""
+    self.document = document
+
+### 3.2 모델 간 데이터 흐름 규칙
+- DocumentModel -> AnnotationModel: 1:N 관계
+- AnnotationModel -> BoundingBox: 1:1 관계
+- 모든 모델은 역참조 가능하도록 설계
+- 순환 참조 방지를 위한 약한 참조 사용

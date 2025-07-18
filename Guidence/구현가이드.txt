@@ -1,0 +1,32 @@
+Phase 1: 기반 구조 구축 (1-2일)
+config/settings.py - 설정 관리 시스템
+
+core/base_classes.py - 추상 클래스 정의
+
+core/exceptions.py - 예외 처리 시스템
+
+utils/logger_util.py - 로깅 시스템
+
+Phase 2: 데이터 모델 구현 (1일)
+models/document_model.py - 문서 데이터 모델
+
+models/annotation_model.py - 어노테이션 모델
+
+Phase 3: 유틸리티 구현 (1-2일)
+utils/file_handler.py - 파일 처리 유틸리티
+
+utils/image_processor.py - 이미지 처리 유틸리티
+
+Phase 4: 서비스 구현 (3-4일)
+services/data_collection_service.py - 데이터 수집
+
+services/labeling_service.py - 라벨링 서비스
+
+services/augmentation_service.py - 데이터 증강
+
+services/validation_service.py - 검증 서비스
+
+Phase 5: 통합 및 테스트 (1-2일)
+main.py - 메인 실행 파일
+
+tests/test_data_preparation.py - 테스트 코드

@@ -1,0 +1,37 @@
+{
+    "template_name": "default_annotation_template",
+    "template_version": "1.0",
+    "description": "기본 어노테이션 템플릿",
+    "required_fields": [
+        "document_title",
+        "document_date", 
+        "supplier_name",
+        "total_amount"
+    ],
+    "optional_fields": [
+        "document_number",
+        "supplier_address",
+        "line_items"
+    ],
+    "field_types": {
+        "document_title": "text",
+        "document_date": "date", 
+        "supplier_name": "text",
+        "total_amount": "number",
+        "document_number": "text",
+        "supplier_address": "text",
+        "line_items": "table"
+    },
+    "validation_rules": {
+        "document_title": {
+            "required": true,
+            "min_length": 1,
+            "max_length": 100
+        },
+        "total_amount": {
+            "required": true,
+            "type": "number",
+            "min_value": 0
+        }
+    }
+}

@@ -1,0 +1,106 @@
+# YOKOGAWA OCR 프로젝트 - 에러 수정 요청
+
+## 현재 상황
+- **에러 발생 파일**: [파일명]
+- **에러 유형**: [Critical/High/Medium/Low]
+- **에러 카테고리**: [Import/Architecture/Naming/Data Flow/Quality/Interface]
+
+## 첨부 자료
+### 필수 지침 파일 (모든 에러 수정 시 참조)
+- project_config.txt: 프로젝트 구조 및 설정
+- class-and-function.txt: 클래스/함수 명세
+- project_architecture_guideline.txt: 아키텍처 원칙
+- variable_naming_standards.txt: 네이밍 컨벤션
+- code_quality_validation_checklist.txt: 품질 기준
+
+### 특화 지침 파일 (에러 유형에 따라 선택)
+- class_interface_specifications.txt: 클래스 인터페이스 문제
+- data_flow_consistency_guidelines.txt: 데이터 흐름 문제
+- dependency_management_rules.txt: 의존성 관리 문제
+
+## 에러 분석 체크리스트
+
+### 에러 메시지 분석
+- [ ] 에러 메시지에서 핵심 키워드 추출
+- [ ] 에러 발생 위치 정확히 파악
+- [ ] 에러 유형 분류 (Critical/High/Medium/Low)
+
+### 관련 파일 영향도 분석
+- [ ] 에러가 다른 파일에 미치는 영향 파악
+- [ ] 연관된 클래스/함수 의존성 확인
+- [ ] 데이터 흐름에 미치는 영향 분석
+## 지침 적용 우선순위
+
+### 1순위: 실행 가능성 보장
+- project_config.txt: 프로젝트 구조 확인
+- class-and-function.txt: 실제 존재하는 클래스/함수 확인
+- dependency_management_rules.txt: 의존성 관리
+
+### 2순위: 아키텍처 준수
+- project_architecture_guideline.txt: 아키텍처 원칙
+- class_interface_specifications.txt: 인터페이스 구현
+
+### 3순위: 코드 품질 및 일관성
+- variable_naming_standards.txt: 네이밍 컨벤션
+- data_flow_consistency_guidelines.txt: 데이터 흐름 일관성
+- code_quality_validation_checklist.txt: 품질 기준
+## 수정 방안 수립 가이드
+
+### 수정 원칙
+1. **최소 변경 원칙**: 에러 해결을 위한 최소한의 변경
+2. **일관성 유지**: 다른 파일과의 일관성 보장
+3. **가이던스 준수**: 모든 지침 파일 규칙 준수
+4. **실행 가능성**: 수정 후 오류 없이 실행 가능
+
+### 수정 우선순위
+1. Critical 에러 해결
+2. High 에러 해결
+3. 가이던스 준수 개선
+4. 코드 품질 개선
+## 필수 검증 항목
+
+### 실행 가능성 검증
+- [ ] 모든 import 구문이 정상 작동하는가?
+- [ ] 수정된 코드가 오류 없이 실행되는가?
+- [ ] 관련 테스트가 통과하는가?
+
+### 가이던스 준수 검증
+- [ ] project_architecture_guideline.txt 준수 확인
+- [ ] variable_naming_standards.txt 준수 확인
+- [ ] class_interface_specifications.txt 준수 확인
+- [ ] dependency_management_rules.txt 준수 확인
+- [ ] data_flow_consistency_guidelines.txt 준수 확인
+
+### 코드 품질 검증
+- [ ] code_quality_validation_checklist.txt 기준 충족
+- [ ] 타입 힌트 100% 적용 확인
+- [ ] 독스트링 완전 작성 확인
+- [ ] 예외 처리 완전 구현 확인
+
+## 수정 완료 최종 검증
+
+### 기능 검증
+- [ ] 모든 기능이 정상 작동하는가?
+- [ ] 에러가 완전히 해결되었는가?
+- [ ] 새로운 에러가 발생하지 않았는가?
+
+### 가이던스 준수 검증
+- [ ] 모든 지침 파일 규칙 준수
+- [ ] 코드 품질 기준 충족
+- [ ] 일관성 유지 확인
+
+### 문서화 검증
+- [ ] 수정 이력 문서화 완료
+- [ ] 코드 주석 업데이트 완료
+- [ ] 사용자 가이드 업데이트 (필요시)
+
+## 수정 요청 사항
+1. **에러 원인 분석**: 첨부된 지침 파일들을 기반으로 에러 원인 파악
+2. **지침 준수 확인**: 모든 지침 파일의 규칙을 엄격히 준수하여 수정
+3. **전체 일관성 유지**: 수정 시 다른 파일과의 연결성 및 일관성 보장
+4. **실행 가능성 보장**: 수정된 코드가 오류 없이 실행되도록 보장
+
+위 지침들을 모두 참조하여 에러를 수정해주세요.
+
+## 에러 상세 정보
+### 발생한 에러 메시지

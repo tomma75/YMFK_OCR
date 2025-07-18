@@ -1,0 +1,211 @@
+YOKOGAWA OCR 데이터 준비 프로젝트 - 데이터 흐름 일관성 지침
+
+====================================================================================
+1. 전체 데이터 파이프라인 흐름
+====================================================================================
+
+### 1.1 데이터 파이프라인 단계
+Raw Files → Data Collection → File Validation → Labeling → Annotation Validation →
+Data Augmentation → Final Validation → Export
+
+
+### 1.2 각 단계별 데이터 형태 표준화
+1단계: Raw Files (List[str])
+raw_files = [
+"/path/to/file1.pdf",
+"/path/to/file2.pdf",
+...
+]
+
+2단계: Data Collection (List[DocumentModel])
+collected_documents = [
+DocumentModel(file_path="/path/to/file1.pdf", metadata={...}),
+DocumentModel(file_path="/path/to/file2.pdf", metadata={...}),
+...
+]
+
+3단계: File Validation (List[ValidatedDocumentModel])
+validated_documents = [
+ValidatedDocumentModel(document=doc, validation_status="passed"),
+...
+]
+
+4단계: Labeling (List[AnnotatedDocumentModel])
+annotated_documents = [
+AnnotatedDocumentModel(document=doc, annotations=[...]),
+...
+]
+
+5단계: Annotation Validation (List[ValidatedAnnotationModel])
+validated_annotations = [
+ValidatedAnnotationModel(annotation=ann, quality_score=0.95),
+...
+]
+
+6단계: Data Augmentation (List[AugmentedDataModel])
+augmented_data = [
+AugmentedDataModel(original=doc, augmented_versions=[...]),
+...
+]
+
+7단계: Final Export (Dict[str, Any])
+export_data = {
+"training_set": [...],
+"validation_set": [...],
+"test_set": [...],
+"metadata": {...}
+}
+
+
+====================================================================================
+2. 서비스 간 데이터 전달 규칙
+====================================================================================
+
+### 2.1 DataCollectionService → LabelingService
+DataCollectionService에서 전달하는 데이터 형태
+def get_collected_data(self) -> List[DocumentModel]:
+"""수집된 문서 모델 리스트 반환"""
+return self.collected_documents
+
+LabelingService에서 받는 데이터 형태
+def initialize_labeling_session(self, documents: List[DocumentModel]) -> bool:
+"""수집된 문서로 라벨링 세션 초기화"""
+for doc in documents:
+if not isinstance(doc, DocumentModel):
+raise TypeError("Expected DocumentModel instance")
+self.pending_documents.append(doc)
+return True
+
+
+### 2.2 LabelingService → AugmentationService
+LabelingService에서 전달하는 데이터 형태
+def export_labeled_data(self) -> List[AnnotatedDocumentModel]:
+"""라벨링된 문서 모델 리스트 반환"""
+return [doc for doc in self.documents if doc.is_fully_annotated()]
+
+AugmentationService에서 받는 데이터 형태
+def initialize_augmentation(self, annotated_docs: List[AnnotatedDocumentModel]) -> bool:
+"""라벨링된 문서로 증강 프로세스 초기화"""
+for doc in annotated_docs:
+if not isinstance(doc, AnnotatedDocumentModel):
+raise TypeError("Expected AnnotatedDocumentModel instance")
+self.source_documents.append(doc)
+return True
+
+
+### 2.3 AugmentationService → ValidationService
+AugmentationService에서 전달하는 데이터 형태
+def get_augmented_dataset(self) -> AugmentedDatasetModel:
+"""증강된 데이터셋 반환"""
+return AugmentedDatasetModel(
+original_data=self.source_documents,
+augmented_data=self.augmented_documents,
+augmentation_rules=self.applied_rules
+)
+
+ValidationService에서 받는 데이터 형태
+def validate_final_dataset(self, dataset: AugmentedDatasetModel) -> ValidationResultModel:
+"""최종 데이터셋 검증"""
+if not isinstance(dataset, AugmentedDatasetModel):
+raise TypeError("Expected AugmentedDatasetModel instance")
+
+validation_results = []
+for doc in dataset.all_documents:
+    result = self._validate_document(doc)
+    validation_results.append(result)
+
+return ValidationResultModel(results=validation_results)
+
+====================================================================================
+3. 변수명 일관성 규칙
+====================================================================================
+
+### 3.1 데이터 처리 단계별 변수명 패턴
+원본 데이터
+raw_files: List[str]
+source_documents: List[DocumentModel]
+
+처리된 데이터
+processed_files: List[str]
+validated_documents: List[ValidatedDocumentModel]
+annotated_documents: List[AnnotatedDocumentModel]
+augmented_documents: List[AugmentedDocumentModel]
+
+결과 데이터
+export_data: Dict[str, Any]
+final_dataset: DatasetModel
+validation_results: List[ValidationResultModel]
+
+
+### 3.2 상태 관리 변수명 패턴
+진행 상태
+collection_progress: float
+labeling_progress: Dict[str, float]
+augmentation_progress: float
+validation_progress: float
+
+통계 정보
+collection_statistics: Dict[str, Any]
+labeling_statistics: Dict[str, Any]
+augmentation_statistics: Dict[str, Any]
+validation_statistics: Dict[str, Any]
+
+설정 정보
+collection_config: DataCollectionConfig
+labeling_config: LabelingConfig
+augmentation_config: AugmentationConfig
+validation_config: ValidationConfig
+
+
+====================================================================================
+4. 오류 처리 및 복구 메커니즘
+====================================================================================
+
+### 4.1 데이터 흐름 중단 시 복구 전략
+class DataFlowManager:
+"""데이터 흐름 관리 클래스"""
+
+def __init__(self):
+    self.checkpoint_data: Dict[str, Any] = {}
+    self.current_stage: str = "initialization"
+
+def save_checkpoint(self, stage: str, data: Any) -> None:
+    """특정 단계의 체크포인트 저장"""
+    self.checkpoint_data[stage] = {
+        'data': data,
+        'timestamp': datetime.now(),
+        'stage': stage
+    }
+
+def restore_from_checkpoint(self, stage: str) -> Any:
+    """체크포인트에서 데이터 복원"""
+    if stage in self.checkpoint_data:
+        return self.checkpoint_data[stage]['data']
+    raise ValueError(f"No checkpoint found for stage: {stage}")
+
+def get_pipeline_status(self) -> Dict[str, Any]:
+    """파이프라인 전체 상태 반환"""
+    return {
+        'current_stage': self.current_stage,
+        'completed_stages': list(self.checkpoint_data.keys()),
+        'last_update': max(
+            [cp['timestamp'] for cp in self.checkpoint_data.values()]
+            if self.checkpoint_data else [datetime.now()]
+        )
+    }
+
+
+### 4.2 데이터 무결성 검증 규칙
+def validate_data_integrity(data: Any, expected_type: Type) -> bool:
+"""데이터 무결성 검증"""
+if not isinstance(data, expected_type):
+raise TypeError(f"Expected {expected_type}, got {type(data)}")
+
+if hasattr(data, 'validate'):
+    return data.validate()
+
+if isinstance(data, list):
+    return all(validate_data_integrity(item, expected_type.__args__) for item in data)
+
+return True
+undefined

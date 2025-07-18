@@ -1,0 +1,8 @@
+# 전체 테스트 실행
+python -m pytest tests/test_data_preparation.py -v
+
+# 개별 테스트 클래스 실행
+python -m pytest tests/test_data_preparation.py::TestDataCollection -v
+
+# 특정 테스트 함수 실행
+python -m pytest tests/test_data_preparation.py::TestDataCollection::test_file_collection_process -v

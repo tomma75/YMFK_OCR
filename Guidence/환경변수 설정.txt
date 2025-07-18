@@ -1,0 +1,4 @@
+# PowerShell에서 실행
+$env:YOKOGAWA_OCR_DATA_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\data"
+$env:YOKOGAWA_OCR_LOG_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\logs"
+$env:YOKOGAWA_OCR_TEMP_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\temp"

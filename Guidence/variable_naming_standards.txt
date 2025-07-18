@@ -1,0 +1,338 @@
+YOKOGAWA OCR 데이터 준비 프로젝트 - 변수명 표준화 지침
+
+====================================================================================
+1. 변수명 네이밍 컨벤션
+====================================================================================
+
+### 1.1 기본 네이밍 규칙
+- 모든 변수명은 snake_case 사용
+- 상수는 UPPER_CASE 사용
+- 클래스명은 PascalCase 사용
+- 비공개 변수는 _underscore 접두사 사용
+- 매우 비공개 변수는 __double_underscore 접두사 사용
+
+### 1.2 도메인 특화 접두사 규칙
+파일 관련 변수
+file_path: str
+file_name: str
+file_size: int
+file_extension: str
+file_metadata: Dict[str, Any]
+
+문서 관련 변수
+document_id: str
+document_model: DocumentModel
+document_pages: List[PageModel]
+document_annotations: List[AnnotationModel]
+
+어노테이션 관련 변수
+annotation_id: str
+annotation_data: Dict[str, Any]
+annotation_bbox: BoundingBox
+annotation_text: str
+annotation_confidence: float
+
+처리 관련 변수
+processing_status: str
+processing_progress: float
+processing_result: Any
+processing_error: Optional[Exception]
+
+검증 관련 변수
+validation_rules: List[ValidationRule]
+validation_result: ValidationResult
+validation_errors: List[ValidationError]
+validation_passed: bool
+
+
+====================================================================================
+2. 함수별 표준 변수명 패턴
+====================================================================================
+
+### 2.1 데이터 수집 함수 변수명
+def collect_pdf_files(source_directory: str) -> List[str]:
+"""PDF 파일 수집 함수"""
+# 입력 관련 변수
+source_path: str = os.path.abspath(source_directory)
+search_pattern: str = "*.pdf"
+
+# 처리 관련 변수
+found_files: List[str] = []
+processed_count: int = 0
+error_count: int = 0
+
+# 결과 관련 변수
+valid_files: List[str] = []
+invalid_files: List[str] = []
+collection_summary: Dict[str, Any] = {}
+
+return valid_files
+def extract_file_metadata(file_path: str) -> Dict[str, Any]:
+"""파일 메타데이터 추출 함수"""
+# 입력 관련 변수
+target_file: str = file_path
+file_stats: os.stat_result = os.stat(file_path)
+
+# 처리 관련 변수
+metadata_dict: Dict[str, Any] = {}
+extraction_errors: List[str] = []
+
+# PDF 관련 변수
+pdf_document: fitz.Document = fitz.open(file_path)
+page_count: int = len(pdf_document)
+document_title: str = pdf_document.metadata.get('title', '')
+
+return metadata_dict
+
+
+### 2.2 라벨링 함수 변수명
+def create_annotation_session(document_path: str) -> str:
+"""어노테이션 세션 생성 함수"""
+# 입력 관련 변수
+source_document: str = document_path
+document_model: DocumentModel = DocumentModel.from_file(document_path)
+
+# 세션 관련 변수
+session_id: str = str(uuid.uuid4())
+session_data: Dict[str, Any] = {}
+session_timestamp: datetime = datetime.now()
+
+# 어노테이션 관련 변수
+annotation_template: Dict[str, Any] = self.load_annotation_template()
+required_fields: List[str] = annotation_template.get('required_fields', [])
+optional_fields: List[str] = annotation_template.get('optional_fields', [])
+
+return session_id
+
+def save_annotation_data(session_id: str, annotation_data: Dict[str, Any]) -> bool:
+"""어노테이션 데이터 저장 함수"""
+# 입력 관련 변수
+current_session: str = session_id
+incoming_data: Dict[str, Any] = annotation_data
+# 검증 관련 변수
+validation_result: bool = self.validate_annotation_data(incoming_data)
+validation_errors: List[str] = []
+
+# 저장 관련 변수
+save_path: str = os.path.join(self.annotations_dir, f"{session_id}.json")
+backup_path: str = f"{save_path}.backup"
+save_success: bool = False
+
+return save_success
+
+
+### 2.3 데이터 증강 함수 변수명
+def apply_geometric_transformations(input_image: np.ndarray) -> List[np.ndarray]:
+"""기하학적 변환 적용 함수"""
+# 입력 관련 변수
+original_image: np.ndarray = input_image.copy()
+image_height: int = original_image.shape
+image_width: int = original_image.shape
+
+# 변환 관련 변수
+rotation_angles: List[float] = [-5, -2, 2, 5]
+scale_factors: List[float] = [0.95, 1.05]
+translation_offsets: List[Tuple[int, int]] = [(-10, -10), (10, 10)]
+
+# 결과 관련 변수
+transformed_images: List[np.ndarray] = []
+transformation_metadata: List[Dict[str, Any]] = []
+
+return transformed_images
+
+def generate_augmented_dataset(original_dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+"""증강된 데이터셋 생성 함수"""
+# 입력 관련 변수
+source_dataset: List[Dict[str, Any]] = original_dataset
+dataset_size: int = len(source_dataset)
+
+# 증강 관련 변수
+augmentation_factor: int = 3
+augmentation_rules: Dict[str, Any] = self.config.augmentation_rules
+
+# 결과 관련 변수
+augmented_dataset: List[Dict[str, Any]] = []
+augmentation_statistics: Dict[str, Any] = {}
+
+return augmented_dataset
+
+====================================================================================
+3. 클래스 멤버 변수 표준화
+====================================================================================
+
+### 3.1 서비스 클래스 멤버 변수
+class DataCollectionService(BaseService):
+"""데이터 수집 서비스 클래스"""
+
+def __init__(self, config: ApplicationConfig, logger: Logger):
+    super().__init__(config, logger)
+    
+    # 설정 관련 멤버 변수
+    self._collection_config: DataCollectionConfig = config.data_collection
+    self._source_directories: List[str] = self._collection_config.source_directories
+    self._supported_formats: List[str] = self._collection_config.supported_formats
+    
+    # 상태 관련 멤버 변수
+    self._is_collecting: bool = False
+    self._collection_progress: float = 0.0
+    self._current_operation: Optional[str] = None
+    
+    # 데이터 관련 멤버 변수
+    self._collected_files: List[str] = []
+    self._file_metadata: Dict[str, Dict[str, Any]] = {}
+    self._collection_statistics: Dict[str, Any] = {}
+    
+    # 오류 관련 멤버 변수
+    self._collection_errors: List[str] = []
+    self._failed_files: List[str] = []
+    
+    # 콜백 관련 멤버 변수
+    self._progress_callbacks: List[Callable] = []
+    self._completion_callbacks: List[Callable] = []
+
+class LabelingService(BaseService):
+"""라벨링 서비스 클래스"""
+
+def __init__(self, config: ApplicationConfig, logger: Logger):
+    super().__init__(config, logger)
+    
+    # 설정 관련 멤버 변수
+    self._labeling_config: LabelingConfig = config.labeling
+    self._annotation_template: Dict[str, Any] = {}
+    self._quality_thresholds: Dict[str, float] = {}
+    
+    # 세션 관리 멤버 변수
+    self._active_sessions: Dict[str, Dict[str, Any]] = {}
+    self._session_timeouts: Dict[str, datetime] = {}
+    
+    # 문서 관리 멤버 변수
+    self._pending_documents: List[DocumentModel] = []
+    self._in_progress_documents: List[DocumentModel] = []
+    self._completed_documents: List[DocumentModel] = []
+    
+    # 어노테이션 관련 멤버 변수
+    self._annotations: Dict[str, List[AnnotationModel]] = {}
+    self._annotation_quality_scores: Dict[str, float] = {}
+    
+    # 통계 관련 멤버 변수
+    self._labeling_statistics: Dict[str, Any] = {}
+    self._productivity_metrics: Dict[str, float] = {}
+
+
+### 3.2 모델 클래스 멤버 변수
+class DocumentModel(BaseModel):
+"""문서 모델 클래스"""
+def __init__(self, file_path: str, metadata: Dict[str, Any]):
+    super().__init__()
+    
+    # 기본 정보 멤버 변수
+    self.document_id: str = str(uuid.uuid4())
+    self.file_path: str = file_path
+    self.file_name: str = os.path.basename(file_path)
+    self.file_size: int = os.path.getsize(file_path)
+    
+    # 메타데이터 멤버 변수
+    self.creation_date: datetime = metadata.get('creation_date', datetime.now())
+    self.modification_date: datetime = metadata.get('modification_date', datetime.now())
+    self.document_title: str = metadata.get('title', '')
+    self.document_author: str = metadata.get('author', '')
+    
+    # 페이지 관련 멤버 변수
+    self.page_count: int = metadata.get('page_count', 0)
+    self.page_models: List[PageModel] = []
+    
+    # 어노테이션 관련 멤버 변수
+    self.annotations: List[AnnotationModel] = []
+    self.annotation_status: str = "pending"
+    self.annotation_progress: float = 0.0
+    
+    # 처리 상태 멤버 변수
+    self.processing_status: str = "ready"
+    self.processing_errors: List[str] = []
+    self.quality_score: Optional[float] = None
+
+class AnnotationModel(BaseModel):
+"""어노테이션 모델 클래스"""
+
+def __init__(self, field_name: str, bbox: BoundingBox, text_value: str):
+    super().__init__()
+    
+    # 기본 정보 멤버 변수
+    self.annotation_id: str = str(uuid.uuid4())
+    self.field_name: str = field_name
+    self.field_type: str = "text"
+    
+    # 위치 정보 멤버 변수
+    self.bounding_box: BoundingBox = bbox
+    self.page_number: int = 1
+    self.coordinates: Dict[str, int] = bbox.to_dict()
+    
+    # 텍스트 관련 멤버 변수
+    self.text_value: str = text_value
+    self.original_text: str = text_value
+    self.normalized_text: str = text_value.strip()
+    
+    # 품질 관련 멤버 변수
+    self.confidence_score: float = 1.0
+    self.quality_flags: List[str] = []
+    self.validation_status: str = "pending"
+    
+    # 관계 정보 멤버 변수
+    self.document_id: Optional[str] = None
+    self.parent_annotation_id: Optional[str] = None
+    self.child_annotation_ids: List[str] = []
+
+
+====================================================================================
+4. 상태 관리 변수 표준화
+====================================================================================
+
+### 4.1 진행 상태 변수
+전체 파이프라인 진행 상태
+pipeline_status: str = "ready" # ready, running, completed, failed
+pipeline_progress: float = 0.0 # 0.0 ~ 1.0
+current_stage: str = "initialization"
+
+각 단계별 진행 상태
+collection_progress: float = 0.0
+labeling_progress: float = 0.0
+augmentation_progress: float = 0.0
+validation_progress: float = 0.0
+
+세부 작업 진행 상태
+files_processed: int = 0
+total_files: int = 0
+documents_labeled: int = 0
+total_documents: int = 0
+
+### 4.2 오류 상태 변수
+오류 발생 상태
+has_errors: bool = False
+error_count: int = 0
+critical_errors: List[str] = []
+warning_messages: List[str] = []
+
+오류 복구 상태
+recovery_attempts: int = 0
+max_recovery_attempts: int = 3
+recovery_success: bool = False
+last_error_timestamp: Optional[datetime] = None
+
+### 4.3 성능 메트릭 변수
+처리 성능 메트릭
+processing_start_time: datetime = datetime.now()
+processing_end_time: Optional[datetime] = None
+processing_duration: Optional[timedelta] = None
+files_per_minute: float = 0.0
+
+메모리 사용량 메트릭
+memory_usage_mb: float = 0.0
+peak_memory_usage_mb: float = 0.0
+memory_limit_mb: float = 8192.0
+
+품질 메트릭
+annotation_accuracy: float = 0.0
+data_completeness: float = 0.0
+validation_pass_rate: float = 0.0
+
+undefined
