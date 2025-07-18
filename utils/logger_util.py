@@ -646,42 +646,33 @@ class CustomLogger:
 
 def setup_logger(name: str, config: LoggingConfig) -> logging.Logger:
     """
-    로거 생성 및 설정
-
+    로거 설정 함수
     Args:
         name: 로거 이름
         config: 로깅 설정 객체
-
     Returns:
-        logging.Logger: 설정된 로거 인스턴스
+        logging.Logger: 설정된 로거
     """
     logger = logging.getLogger(name)
-    logger.setLevel(config.get_log_level_numeric())
-
-    # 콘솔 핸들러 추가
+    logger.setLevel(getattr(logging, config.log_level))
+    
+    # 기존 핸들러 제거 (중복 방지)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    
+    # 콘솔 핸들러 추가 (기본)
     if config.enable_console_logging:
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(getattr(logging, config.console_log_level))
-        console_handler.setFormatter(
-            logging.Formatter(config.log_format, config.date_format)
-        )
+        console_handler = create_console_handler()
+        console_handler.setFormatter(LogFormatter(config.log_format, config.date_format))
         logger.addHandler(console_handler)
-
-    # 파일 핸들러 추가
+    
+    # 파일 핸들러 추가 (옵션)
     if config.enable_file_logging:
-        file_handler = logging.handlers.RotatingFileHandler(
-            config.log_file_path,
-            maxBytes=config.max_file_size_mb * 1024 * 1024,
-            backupCount=config.backup_count,
-            encoding="utf-8",
-        )
-        file_handler.setLevel(getattr(logging, config.file_log_level))
-        file_handler.setFormatter(
-            logging.Formatter(config.log_format, config.date_format)
-        )
+        file_handler = create_file_handler(config.log_file_path)
+        file_handler.setFormatter(StructuredLogFormatter())  # JSON 형식으로 변경 가능
         logger.addHandler(file_handler)
-
-    logger.info(f"Logger '{name}' initialized successfully")
+    
+    logger.info(f"Logger '{name}' initialized with config")
     return logger
 
 
