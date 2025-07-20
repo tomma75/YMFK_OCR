@@ -1,4 +1,13 @@
-# PowerShell에서 실행
-$env:YOKOGAWA_OCR_DATA_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\data"
-$env:YOKOGAWA_OCR_LOG_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\logs"
-$env:YOKOGAWA_OCR_TEMP_PATH = "D:\8.간접업무자동화\1. PO시트입력자동화\YOKOGAWA OCR\YMFK_OCR\temp"
+interactive_trainer.py (Current: 95% → Target: 100%)
+
+feedback_handler.py (Current: 90% → Target: 100%)
+
+model/train_utils.py (Current: 90% → Target: 100%)
+
+validation_interface/web_server.py (Current: 85% → Target: 100%)
+
+validation_interface/utils.py (Current: 70% → Target: 100%)
+
+validation_interface/ui/ocr_review_app.py (Current: 75% → Target: 100%)
+
+main.py (Current: 80% → Target: 100%) – Newly added due to web mode integration needs.

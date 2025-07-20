@@ -1,32 +1,122 @@
-Phase 1: 기반 구조 구축 (1-2일)
-config/settings.py - 설정 관리 시스템
+# YOKOGAWA OCR 인터랙티브 학습/검증 시스템 통합 지침서
 
-core/base_classes.py - 추상 클래스 정의
+## 1. 요청 배경 및 목표
 
-core/exceptions.py - 예외 처리 시스템
+- **기존 시스템**: 완성된 데이터셋(이미지 + 어노테이션)만을 제공
+- **새로운 요구사항**:
+  - 학습 중간에 생성된 모델의 예측 결과를 실시간으로 사용자 검증 UI에 제공
+  - 사용자가 예측 결과를 직접 검수, 재라벨링, 수정 가능
+  - 즉시 피드백을 학습 데이터에 반영, 학습을 언제든 중단/재개 가능
 
-utils/logger_util.py - 로깅 시스템
+---
 
-Phase 2: 데이터 모델 구현 (1일)
-models/document_model.py - 문서 데이터 모델
+## 2. 개발 전반 지침
 
-models/annotation_model.py - 어노테이션 모델
+### 2. 파일별 필수 참조 지침서
 
-Phase 3: 유틸리티 구현 (1-2일)
-utils/file_handler.py - 파일 처리 유틸리티
+| 파일명            | 필수 참조 TXT 지침서                                                                                                   |
+|:------------------|:----------------------------------------------------------------------------------------------------------------------|
+| interactive_trainer.py  | class-and-function.txt, data_flow_consistency_guidelines.txt, project_architecture_guideline.txt, code_quality_validation_checklist.txt     |
+| feedback_handler.py     | class-and-function.txt, variable_naming_standards.txt, data_flow_consistency_guidelines.txt, code_quality_validation_checklist.txt          |
+| validation_interface/   | class_interface_specifications.txt, data_flow_consistency_guidelines.txt, variable_naming_standards.txt, code_quality_validation_checklist.txt|
+| (기타 의존 파일)   | 반드시 이미 선언된 함수/클래스(시그니처 불변)만 활용 (예: 데이터 모델, 라벨링 함수 등)                                     |
 
-utils/image_processor.py - 이미지 처리 유틸리티
 
-Phase 4: 서비스 구현 (3-4일)
-services/data_collection_service.py - 데이터 수집
+## 3. 폴더 및 파일 구조 명세
 
-services/labeling_service.py - 라벨링 서비스
+yokogawa_ocr_training/
+├── interactive_trainer.py # 메인 학습/검수 오케스트레이터
+├── feedback_handler.py # 사용자 피드백-어노테이션 병합, 데이터셋 최신화
+├── validation_interface/
+│ ├── init.py
+│ ├── web_server.py # FastAPI/Flask 기반 inference 결과 export/리뷰 API
+│ ├── ui/ # 프론트/React 등 (바운딩박스, 텍스트 annotation 실시간 검수/수정 지원)
+│ └── utils.py # 검증, 시각화, 파일포맷 지원 유틸 함수
+├── model/
+│ ├── train_utils.py # 모델 학습/저장/예측 코어 로직
+│ ├── model_checkpoint/ # 중간 학습 모델(h5) 저장
+├── logs/
+├── requirements.txt
+└── README.md
 
-services/augmentation_service.py - 데이터 증강
 
-services/validation_service.py - 검증 서비스
+## 4. 각 파일별 상세 구현 지침
 
-Phase 5: 통합 및 테스트 (1-2일)
-main.py - 메인 실행 파일
+### 4.1 interactive_trainer.py
 
-tests/test_data_preparation.py - 테스트 코드
+- **지침 문서**: class-and-function.txt, data_flow_consistency_guidelines.txt, project_architecture_guideline.txt, code_quality_validation_checklist.txt
+- **핵심 구현점**:
+  - 학습 제어 클래스(ex. TrainingManager): 학습 시작/일시정지/재개/종료
+  - 학습 중간 체크포인트 저장(.h5)
+  - 중간 모델로 검증셋 inference 및 결과 export (예측 json, 바운딩박스 등)
+  - feedback_handler, validation_interface/web_server와 데이터 연동
+  - event-driven 또는 polling 방식의 로깅/에러처리/상태관리 구조
+  - 함수/클래스 시그니처, 네이밍, 입출력 구조는 class-and-function.txt 및 data_flow_consistency_guidelines.txt의 표준 strictly 반영
+
+### 4.2 validation_interface/web_server.py & ui/
+
+- **지침 문서**: class_interface_specifications.txt, variable_naming_standards.txt, code_quality_validation_checklist.txt
+- **핵심 구현점**:
+  - FastAPI/Flask 등으로 inference 결과(API endpoint: ex. /get-inference-result, /review-feedback POST) REST API 제공
+  - POST /review-feedback: UI에서 사용자 수정/검수 데이터(json) 수신 및 저장
+  - React 등 프론트엔드: 이미지+바운딩박스, 텍스트 예측 결과 시각화, 드래그/수정/확정 지원
+  - 모든 인수/리턴 타입, dto, 구조는 class_interface_specifications.txt를 따름
+
+### 4.3 feedback_handler.py
+
+- **지침 문서**: data_flow_consistency_guidelines.txt, variable_naming_standards.txt, code_quality_validation_checklist.txt
+- **핵심 구현점**:
+  - merge_feedback_with_annotations(feedback_path, annotations_path) 등 네이밍, 시그니처 변수는 variable_naming_standards.txt 준수
+  - 사용자 검수/수정 내역 취합 → 기존 학습 어노테이션(.json/.csv) 데이터에 atomic하게 append/merge 및 integrity, 버전 관리
+  - 데이터 유효성 검사/에러보고, 파일 atomicity, 중단 시 체크포인트 지원
+
+---
+
+## 5. 개발/코드 작성 요청 포맷 예시
+
+YOKOGAWA OCR 인터랙티브 학습/검증 시스템 신규 폴더 및 파일 작성 요청
+프로젝트 구조
+아래와 같이 신규 학습 프로젝트(yokogawa_ocr_training/) 하위에 다음 파일들을 요구합니다.
+
+interactive_trainer.py: 실제 존재하는 함수/클래스 시그니처와 class-and-function.txt 패턴을 준수할 것
+
+feedback_handler.py: 실제 병합/데이터통합 함수명은 variable_naming_standards.txt를 반드시 따를 것
+
+validation_interface/web_server.py: FastAPI의 endpoint, dto, 함수명 등은 class_interface_specifications.txt에서 API 관련 규격을 참조하여 정의
+
+validation_interface/ui/: 실제 바운딩박스 수정 지원 코드(React 등 프론트 구현 명세)
+
+모든 데이터 흐름 단위 및 중간 데이터 저장 포맷, 네이밍, error handling 규칙은 data_flow_consistency_guidelines.txt, code_quality_validation_checklist.txt에 따라 설계할 것
+
+세부 구현 지침
+모든 함수/클래스/모듈명은 실제 선언된 시그니처와 참조 txt 파일의 명명/타입 지침을 따라야 함
+
+(필요 시) 기존 데이터 모델 및 유틸리티 함수는 선언되어 있는 형태로만 사용
+
+내부적으로 발생하는 모든 로그/오류는 code_quality_validation_checklist.txt 수준으로 처리
+
+함수/데이터의 입출력 인터페이스 및 json 구조는 class-and-function.txt, data_flow_consistency_guidelines.txt의 데이터 예시 표준을 따름
+
+시스템 요구 목적
+학습 중간에 inference 결과를 사용자에게 실시간 시각화로 제공
+
+사용자가 직접 예측결과(바운딩박스, 텍스트 등)를 검수/수정하고 저장
+
+feedback_handler에서 검수결과를 데이터셋으로 병합 및 학습 데이터 최신화
+
+interactive_trainer.py에서 학습 반복, 중지, 재시작 등 전체 워크플로 관장
+
+실제 .py에서 선언된 함수/클래스를 분석 후, 상기 지침에 맞춰 코드를 작성하세요.
+
+ 
+
+---
+
+## 6. 품질 체크리스트 및 검증 포인트
+
+- [ ] SOLID, 계층형 설계, 의존성 및 네이밍 규칙 완벽 준수
+- [ ] 실제 선언/import 가능한 함수/클래스만 활용(기존 .py 시그니처 불변)
+- [ ] 데이터 흐름의 모든 중간산출물(json, 이미지 등)는 파일 스키마, 변수명, 저장 위치 표준 엄격 적용
+- [ ] 웹서버/API, 피드백 병합, 학습 제어기에서 발생할 수 있는 에러/Interrupt에 대한 예외/복구 설계 필수
+- [ ] 모든 코드는 첨부된 가이드라인(txt)에 기재된 규칙만을 참조하여 작성
+
